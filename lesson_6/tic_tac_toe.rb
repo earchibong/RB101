@@ -8,6 +8,7 @@ WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
                 [[1, 5, 9], [3, 5, 7]] # diagonals
 
 MAX_WINS = 3
+VALID_QUIT = %w(q quit)
 
 # helper methods
 def prompt(msg)
@@ -30,15 +31,24 @@ greeting = <<-DOC
   If you're ready press 'Enter'.
 DOC
 
+def display_newline(num = 1)
+  num.times { puts "" }
+end
+
 # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
 def display_board(brd, score)
   system 'clear'
+  display_newline(1)
   puts " You're #{PLAYER_MARKER}. Computer is #{COMPUTER_MARKER}"
-  puts ""
+  display_newline(2)
   puts " --CURRENT SCORE-- (First to #{MAX_WINS} wins!)"
+  display_newline(1)
   puts "Player: #{score[:player]}"
   puts "Computer: #{score[:computer]}"
-  puts ""
+  display_newline(2)
+  puts "  1  |  2  |  3  "
+  puts "=====+=====+====="
+  display_newline(2)
   puts "     |     |     "
   puts "  #{brd[1]}  |  #{brd[2]}  |  #{brd[3]}  "
   puts "     |     |     "
@@ -50,7 +60,10 @@ def display_board(brd, score)
   puts "     |     |     "
   puts "  #{brd[7]}  |  #{brd[8]}  |  #{brd[9]}  "
   puts "     |     |     "
-  puts ""
+  display_newline(2)
+  puts "=====+=====+====="
+  puts "  7  |  8  |  9  "
+  display_newline(2)
 end
 # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
@@ -67,7 +80,7 @@ end
 def who_goes_first?
   reply = nil
   loop do
-    prompt "Who would you like to start the game? Type: 'player' or 'computer'"
+    prompt "Who would you like to start the game? (p)layer or (c)omputer'"
     prompt "Press enter to let the computer choose"
     reply = gets.chomp.downcase
     break if reply == 'player' || reply == 'computer' || reply.empty?
@@ -173,12 +186,13 @@ end
 
 def display_game_winner(brd)
   prompt "Winner: #{detect_winner(brd)}"
-  prompt "hit any key to continue"
-  gets
 end
 
 def display_tie
   prompt "It's a tie!"
+end
+
+def hit_any_key
   prompt "hit any key to continue"
   gets
 end
@@ -207,6 +221,13 @@ def play_again?
   prompt "Do you want to play again? (y or n)"
   answer = gets.chomp
   answer.downcase.start_with?('n') ? false : true
+end
+
+def next_round?
+  prompt "Next round? Press 'enter' key to continue\n
+  or hit 'q' if you wish to quit the game."
+  answer = gets.chomp.downcase
+  VALID_QUIT.none?(answer)
 end
 
 # game starts
@@ -243,8 +264,10 @@ loop do
     end
 
     break if ultimate_winner?(score)
+    next_round? ? next : break
   end
 
+  break if !ultimate_winner?(score)
   display_ultimate_winner(score)
 
   break unless play_again?

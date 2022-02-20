@@ -1,10 +1,13 @@
-SUITS = ['H', 'D', 'S', 'C']
+SUITS = ['Hearts', 'Diamonds', 'Spades', 'Clubs']
 VALUES = ['2', '3', '4', '5', '6', '7', '8', '9', 'J', 'Q', 'K', 'A']
+NAMES = { '2' => '2', '3' => '3', '4' => '4', '5' => '5', '6' => '6',
+          '7' => '7', '8' => '8', '9' => '9', 'J' => 'Jack',
+          'Q' => 'Queen', 'K' => 'King', 'A' => 'Ace' }
 MAX_WINS = 3
 GAME_NAME = 21
 VALID_QUIT = %w(q quit)
 
-game_rules = <<~MSG
+game_rules = <<-MSG
 
   The game consists of a "dealer" and a "player". Both are 
   initially dealt 2 cards. The player can see their 2 cards, but can only see 
@@ -65,10 +68,16 @@ def initial_deal(cards, deck)
   end
 end
 
+def cards_to_string(cards)
+  cards.map { |suit, value| "#{value} of #{suit}" }
+end
+
 def reveal_initial_cards(cards, totals)
+  player_cards = cards[:player]
+  dealer_cards = cards[:dealer]
   display_newline(2)
-  prompt "Dealer has #{cards[:dealer][0]} and unknown"
-  prompt "You have #{cards[:player][0]} and #{cards[:player][1]}
+  prompt "Dealer has #{cards_to_string(dealer_cards)[0]} and unknown"
+  prompt "You have #{cards_to_string(player_cards)}
   for a total of #{totals[:player]}"
   display_newline(1)
 end
@@ -124,9 +133,10 @@ def player_stay
 end
 
 def player_hit(deck, cards)
+  player_cards = cards[:player]
   cards[:player] << deck.pop
   prompt "You chose to hit."
-  prompt "Your cards are now #{cards[:player]}"
+  prompt "Your cards are now #{cards_to_string(player_cards)}"
   prompt "Your total is now #{total(cards[:player])}"
   display_newline(2)
 end
@@ -149,10 +159,11 @@ def busted?(cards)
 end
 
 def dealer_hit(deck, cards)
+  dealer_cards = cards[:dealer]
   display_newline(1)
   prompt "Dealer hits!"
   cards[:dealer] << deck.pop
-  prompt "Dealer's cards are now at #{cards[:dealer]}"
+  prompt "Dealer's cards are now at #{cards_to_string(dealer_cards)}"
   prompt "Dealer's total is now #{total(cards[:dealer])}"
   display_newline(1)
 end
@@ -167,11 +178,13 @@ def dealer_turn(deck, cards)
 end
 
 def compare_cards(cards)
+  player_cards = cards[:player]
+  dealer_cards = cards[:dealer]
   display_newline(1)
   puts "===================="
-  prompt "Dealer has #{cards[:dealer]}
+  prompt "Dealer has #{cards_to_string(dealer_cards)}
   for a total of #{total(cards[:dealer])} "
-  prompt "You have #{cards[:player]}
+  prompt "You have #{cards_to_string(player_cards)}
   for a total of #{total(cards[:player])}"
   puts "===================="
   display_newline(1)
@@ -229,8 +242,8 @@ end
 def display_score_msg(score)
   display_newline(1)
   puts "===================="
-  prompt "Dealer has #{score[:dealer]} wins"
-  prompt "You have #{score[:player]} wins"
+  prompt "Dealer has #{score[:dealer]} win(s)"
+  prompt "You have #{score[:player]} win(s)"
   puts "===================="
   display_newline(1)
 end
@@ -285,6 +298,8 @@ loop do
   score = initialise_wins
 
   loop do # game loop
+    prompt "Hit any key to continue"
+    gets
     system 'clear'
     round += 1
     deck = initialise_deck
@@ -321,12 +336,15 @@ loop do
 
     detect_result(cards, totals)
     compare_cards(cards)
+    display_result(cards, totals)
     update_score!(score, cards, totals)
     break if grand_champion?(score)
   end
 
+  break if !grand_champion?(score)
   system 'clear'
   display_score_msg(score)
   display_grand_champion_msg(score)
+  break unless play_again?
 end
 prompt "Thank you for playing 21! Good-bye!"
